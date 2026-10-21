@@ -1,5 +1,5 @@
 from flask import jsonify, request, abort
-from app.models import Categoria, db
+from app.models import Categoria, Producto, db
 
 # LISTAR CATEGORIAS
 def categoria_list():
@@ -62,12 +62,18 @@ def categoria_delete(categoria_id):
     if not categoria:
         abort(404, description="Categoria no encontrada")
 
+    # Validar que no tenga productos asociados
+    tiene_productos = db.session.execute(
+        db.select(Producto).where(Producto.categoria_id == categoria_id).limit(1)
+    ).scalars().first()
+
+    if tiene_productos:
+        abort(409, description="No se puede eliminar: la categoria tiene productos asociados")
+
     db.session.delete(categoria)
     db.session.commit()
 
     return jsonify({"mensaje": "Categoria eliminada correctamente"}), 200
-    
-
 
 
         
